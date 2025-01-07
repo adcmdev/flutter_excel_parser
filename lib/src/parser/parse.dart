@@ -580,7 +580,11 @@ class Parser {
   }
 
   void _parseCell(
-      XmlElement node, Sheet sheetObject, int rowIndex, String name) {
+    XmlElement node,
+    Sheet sheetObject,
+    int rowIndex,
+    String name,
+  ) {
     int? columnIndex = _getCellNumber(node);
     if (columnIndex == null) {
       return;
@@ -605,56 +609,72 @@ class Parser {
     CellValue? value;
     String? type = node.getAttribute('t');
 
-    switch (type) {
-      // sharedString
-      case 's':
-        final sharedString = _excel._sharedStrings
-            .value(int.parse(_parseValue(node.findElements('v').first)));
-        value = TextCellValue.span(sharedString!.textSpan);
-        break;
-      // boolean
-      case 'b':
-        value = BoolCellValue(_parseValue(node.findElements('v').first) == '1');
-        break;
-      // error
-      case 'e':
-      // formula
-      case 'str':
-        value = FormulaCellValue(_parseValue(node.findElements('v').first));
-        break;
-      // inline string
-      case 'inlineStr':
-        // <c r='B2' t='inlineStr'>
-        // <is><t>Dartonico</t></is>
-        // </c>
-        value = TextCellValue(_parseValue(node.findAllElements('t').first));
-        break;
-      // number
-      case 'n':
-      default:
-        var formulaNode = node.findElements('f');
-        if (formulaNode.isNotEmpty) {
-          value = FormulaCellValue(_parseValue(formulaNode.first).toString());
-        } else {
-          final vNode = node.findElements('v').firstOrNull;
-          if (vNode == null) {
-            value = null;
-          } else if (s1 != null) {
-            final v = _parseValue(vNode);
-            var numFmtId = _excel._numFmtIds[s];
-            final numFormat = _excel._numFormats.getByNumFmtId(numFmtId);
-            if (numFormat == null) {
-              assert(
-                  false, 'found no number format spec for numFmtId $numFmtId');
-              value = NumFormat.defaultNumeric.read(v);
-            } else {
-              value = numFormat.read(v);
-            }
-          } else {
-            final v = _parseValue(vNode);
-            value = NumFormat.defaultNumeric.read(v);
+    try {
+      switch (type) {
+        // sharedString
+        case 's':
+          final valueToParse = node.findElements('v').firstOrNull;
+          if (valueToParse == null) {
+            value = TextCellValue.span(TextSpan(text: 'null'));
+            break;
           }
-        }
+
+          final sharedString = _excel._sharedStrings.value(
+            int.parse(_parseValue(valueToParse)),
+          );
+          if (sharedString != null) {
+            value = TextCellValue.span(sharedString.textSpan);
+          } else {
+            value = TextCellValue.span(TextSpan(text: 'null'));
+          }
+          break;
+        // boolean
+        case 'b':
+          value =
+              BoolCellValue(_parseValue(node.findElements('v').first) == '1');
+          break;
+        // error
+        case 'e':
+        // formula
+        case 'str':
+          value = FormulaCellValue(_parseValue(node.findElements('v').first));
+          break;
+        // inline string
+        case 'inlineStr':
+          // <c r='B2' t='inlineStr'>
+          // <is><t>Dartonico</t></is>
+          // </c>
+          value = TextCellValue(_parseValue(node.findAllElements('t').first));
+          break;
+        // number
+        case 'n':
+        default:
+          var formulaNode = node.findElements('f');
+          if (formulaNode.isNotEmpty) {
+            value = FormulaCellValue(_parseValue(formulaNode.first).toString());
+          } else {
+            final vNode = node.findElements('v').firstOrNull;
+            if (vNode == null) {
+              value = null;
+            } else if (s1 != null) {
+              final v = _parseValue(vNode);
+              var numFmtId = _excel._numFmtIds[s];
+              final numFormat = _excel._numFormats.getByNumFmtId(numFmtId);
+              if (numFormat == null) {
+                assert(false,
+                    'found no number format spec for numFmtId $numFmtId');
+                value = NumFormat.defaultNumeric.read(v);
+              } else {
+                value = numFormat.read(v);
+              }
+            } else {
+              final v = _parseValue(vNode);
+              value = NumFormat.defaultNumeric.read(v);
+            }
+          }
+      }
+    } catch (e) {
+      value = TextCellValue.span(TextSpan(text: 'null'));
     }
 
     sheetObject.updateCell(
