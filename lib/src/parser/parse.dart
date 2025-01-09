@@ -619,8 +619,10 @@ class Parser {
             break;
           }
 
+          final valueParsed = _parseValue(valueToParse);
+
           final sharedString = _excel._sharedStrings.value(
-            int.parse(_parseValue(valueToParse)),
+            int.parse(valueParsed),
           );
           if (sharedString != null) {
             value = TextCellValue.span(sharedString.textSpan);
@@ -679,7 +681,7 @@ class Parser {
 
     sheetObject.updateCell(
       CellIndex.indexByColumnRow(columnIndex: columnIndex, rowIndex: rowIndex),
-      value,
+      value ?? TextCellValue.span(TextSpan(text: 'null')),
       cellStyle: _excel._cellStyleList[s],
     );
   }

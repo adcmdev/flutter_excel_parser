@@ -56,11 +56,11 @@ class Excel {
   }
 
   String? _defaultSheet;
-  late Parser parser;
+  Parser? parser;
 
   Excel._(this._archive) {
     parser = Parser._(this);
-    parser._startParsing();
+    parser?._startParsing();
   }
 
   factory Excel.createExcel() {

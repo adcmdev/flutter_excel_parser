@@ -4,7 +4,7 @@ class Save {
   final Excel _excel;
   final Map<String, ArchiveFile> _archiveFiles = {};
   final List<CellStyle> _innerCellStyle = [];
-  final Parser parser;
+  final Parser? parser;
 
   Save._(this._excel, this.parser);
 
@@ -717,7 +717,7 @@ class Save {
         Iterable<XmlElement>? iterMergeElement = _excel
             ._xmlFiles[_excel._xmlSheetId[s]]
             ?.findAllElements('mergeCells');
-        late XmlElement mergeElement;
+        XmlElement mergeElement = XmlElement(XmlName(''));
         if (iterMergeElement?.isNotEmpty ?? false) {
           mergeElement = iterMergeElement!.first;
         } else {
@@ -910,7 +910,7 @@ class Save {
       ///
       /// Create the sheet's xml file if it does not exist.
       if (_excel._sheets[sheetName] == null) {
-        parser._createSheet(sheetName);
+        parser?._createSheet(sheetName);
       }
 
       /// Clear the previous contents of the sheet if it exists,
